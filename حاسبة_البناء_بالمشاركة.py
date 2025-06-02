@@ -2,6 +2,8 @@ import streamlit as st
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+import arabic_reshaper
+from bidi.algorithm import get_display
 import os
 
 st.set_page_config(page_title="برنامج البناء بالمشاركة", layout="wide")
@@ -92,45 +94,50 @@ if st.button("📄 حفظ النتائج كـ PDF"):
     pdf_file = "نتائج_البناء_بالمشاركة.pdf"
     c = canvas.Canvas(pdf_file, pagesize=(595, 842))
     
-    # تحميل خط عربي
-    font_path = "arial.ttf"  # لازم تحطه في نفس مجلد البرنامج
+    font_path = "arial.ttf"  # تأكد من وجود الخط في نفس المسار
     if os.path.exists(font_path):
         pdfmetrics.registerFont(TTFont("Arabic", font_path))
         c.setFont("Arabic", 14)
     else:
         c.setFont("Helvetica", 14)
-    
-    c.drawString(100, 800, "نتائج البناء بالمشاركة:")
-    
-    y = 780
-    c.setFont("Arabic", 12)
-    c.drawString(100, y, "✅ قائمة المراجعة:")
+
+    def draw_arabic_text(c, x, y, text):
+        reshaped_text = arabic_reshaper.reshape(text)
+        bidi_text = get_display(reshaped_text)
+        c.drawRightString(x, y, bidi_text)  # من اليمين لليسار
+
+    y = 800
+    draw_arabic_text(c, 550, y, "نتائج البناء بالمشاركة:")
+
+    y -= 20
+    draw_arabic_text(c, 550, y, "✅ قائمة المراجعة:")
     y -= 20
     for item in checklist_items:
         status = "✔️" if item in completed_items else "❌"
-        c.drawString(100, y, f"{status} {item}")
+        draw_arabic_text(c, 550, y, f"{status} {item}")
         y -= 15
         if y < 100:
             c.showPage()
             y = 800
 
-    c.drawString(100, y, "📊 الحاسبة:")
+    y -= 10
+    draw_arabic_text(c, 550, y, "📊 الحاسبة:")
     y -= 20
-    c.drawString(100, y, f"إجمالي عدد الشقق: {اجمالي_عدد_الشقق}")
+    draw_arabic_text(c, 550, y, f"إجمالي عدد الشقق: {اجمالي_عدد_الشقق}")
     y -= 15
-    c.drawString(100, y, f"سعر الوحدة: {سعر_الوحدة:,.0f} جنيه")
+    draw_arabic_text(c, 550, y, f"سعر الوحدة: {سعر_الوحدة:,.0f} جنيه")
     y -= 15
-    c.drawString(100, y, f"إجمالي الإيرادات: {اجمالي_الايرادات:,.0f} جنيه")
+    draw_arabic_text(c, 550, y, f"إجمالي الإيرادات: {اجمالي_الايرادات:,.0f} جنيه")
     y -= 15
-    c.drawString(100, y, f"صافي الربح: {صافي_الربح:,.0f} جنيه")
+    draw_arabic_text(c, 550, y, f"صافي الربح: {صافي_الربح:,.0f} جنيه")
     y -= 15
-    c.drawString(100, y, f"حصة المطور: {حصة_المطور:,.0f} جنيه")
+    draw_arabic_text(c, 550, y, f"حصة المطور: {حصة_المطور:,.0f} جنيه")
     y -= 15
-    c.drawString(100, y, f"حصة المالك: {حصة_المالك:,.0f} جنيه")
+    draw_arabic_text(c, 550, y, f"حصة المالك: {حصة_المالك:,.0f} جنيه")
     y -= 15
-    c.drawString(100, y, f"إجمالي الأمن والصيانة: {اجمالي_الامن_والصيانة_السنوي:,.0f} جنيه")
+    draw_arabic_text(c, 550, y, f"إجمالي الأمن والصيانة: {اجمالي_الامن_والصيانة_السنوي:,.0f} جنيه")
     y -= 15
-    c.drawString(100, y, f"القسط الشهري: {القسط_الشهري:,.0f} جنيه")
+    draw_arabic_text(c, 550, y, f"القسط الشهري: {القسط_الشهري:,.0f} جنيه")
     
     c.save()
 
